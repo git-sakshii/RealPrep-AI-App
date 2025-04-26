@@ -151,7 +151,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 # --- Configuration ---
 AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
-AZURE_OPENAI_BASE = "https://kushal43.openai.azure.com"
+AZURE_OPENAI_BASE = "endpoint url"
 AZURE_OPENAI_API_VERSION = "2025-01-01-preview"
 AZURE_EMBEDDING_DEPLOYMENT = "text-embedding-ada-002"
 AZURE_CHAT_DEPLOYMENT = "gpt-4o"
