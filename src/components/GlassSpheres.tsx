@@ -1,262 +1,276 @@
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
-
-interface MousePosition {
-  x: number;
-  y: number;
-}
-
-interface Line {
-  text: string;
-  x: number;
-  y: number;
-  size: number;
-  isTitle?: boolean;
-}
-
-interface SphereProps {
-  delay: number;
-  duration: number;
-  size: string;
-  x: number;
-  y: number;
-}
+import { ArrowRight, Sparkles, Zap, Brain } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const GlassSpheres = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [hoveredLine, setHoveredLine] = useState<number | null>(null);
-  const [mousePosition, setMousePosition] = useState<MousePosition>({ x: 0, y: 0 });
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end start"]
+  });
+
+  const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
+  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
-    const updateDimensions = () => {
-      if (canvasRef.current) {
-        const { clientWidth, clientHeight } = canvasRef.current;
-        setDimensions({ width: clientWidth, height: clientHeight });
-      }
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({
+        x: (e.clientX / window.innerWidth) * 100,
+        y: (e.clientY / window.innerHeight) * 100,
+      });
     };
 
-    window.addEventListener('resize', updateDimensions);
-    updateDimensions();
-
-    return () => window.removeEventListener('resize', updateDimensions);
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Set canvas size with proper scaling
-    const setCanvasSize = () => {
-      const dpr = window.devicePixelRatio || 1;
-      const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-      ctx.scale(dpr, dpr);
-    };
-    setCanvasSize();
-    window.addEventListener('resize', setCanvasSize);
-
-    // Track mouse position for light effects
-    const handleMouseMove = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      setMousePosition({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
-      });
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-
-    let animationFrame: number;
-    
-    // Lines with their positions for hover detection
-    const lines: Line[] = [
-      { text: 'RealPrep -', x: canvas.width * 0.05, y: canvas.height * 0.25, size: 96, isTitle: true },
-      { text: 'CRUSH YOUR', x: canvas.width * 0.05, y: canvas.height * 0.35, size: 72 },
-      { text: 'INTERVIEWS WITH', x: canvas.width * 0.05, y: canvas.height * 0.45, size: 72 },
-      { text: 'AI POWERED', x: canvas.width * 0.05, y: canvas.height * 0.55, size: 72 },
-      { text: 'MOCK SESSIONS', x: canvas.width * 0.05, y: canvas.height * 0.65, size: 72 }
-    ];
-
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Draw background
-      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      gradient.addColorStop(0, '#0a0a0a');
-      gradient.addColorStop(1, '#121212');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Draw light source following mouse
-      const glowRadius = 400;
-      const radialGlow = ctx.createRadialGradient(
-        mousePosition.x, mousePosition.y, 0,
-        mousePosition.x, mousePosition.y, glowRadius
-      );
-      radialGlow.addColorStop(0, 'rgba(255, 0, 0, 0.15)');
-      radialGlow.addColorStop(0.5, 'rgba(255, 0, 0, 0.08)');
-      radialGlow.addColorStop(1, 'rgba(255, 0, 0, 0)');
-      ctx.fillStyle = radialGlow;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      // Draw text with glass effect
-      lines.forEach((line, index) => {
-        const isHovered = hoveredLine === index;
-        
-        // Set text style
-        ctx.textAlign = 'left';
-        ctx.font = `bold ${isHovered ? line.size + 8 : line.size}px Montserrat`;
-        
-        // Text shadow for depth
-        ctx.shadowColor = 'rgba(255, 0, 0, 0.5)';
-        ctx.shadowBlur = isHovered ? 30 : 15;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-        
-        // Draw text with glass effect
-        if (isHovered) {
-          // Create glowing effect
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-          ctx.fillText(line.text, line.x, line.y);
-          
-          // Add accent line
-          const textWidth = ctx.measureText(line.text).width;
-          ctx.beginPath();
-          ctx.moveTo(line.x, line.y + 15);
-          ctx.lineTo(line.x + textWidth, line.y + 15);
-          ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
-          ctx.lineWidth = 3;
-          ctx.stroke();
-        } else {
-          // Normal text with subtle gradient
-          const textGradient = ctx.createLinearGradient(
-            line.x, line.y - line.size, 
-            line.x, line.y
-          );
-          
-          if (line.isTitle) {
-            textGradient.addColorStop(0, '#ff3232');
-            textGradient.addColorStop(1, '#ff0000');
-          } else {
-            textGradient.addColorStop(0, '#ffffff');
-            textGradient.addColorStop(1, '#cccccc');
-          }
-          
-          ctx.fillStyle = textGradient;
-          ctx.fillText(line.text, line.x, line.y);
-        }
-        
-        // Reset shadow
-        ctx.shadowBlur = 0;
-      });
-
-      // Draw decorative lines
-      ctx.beginPath();
-      ctx.moveTo(canvas.width * 0.05, canvas.height * 0.15);
-      ctx.lineTo(canvas.width * 0.4, canvas.height * 0.15);
-      ctx.strokeStyle = 'rgba(255, 0, 0, 0.7)';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      
-      ctx.beginPath();
-      ctx.moveTo(canvas.width * 0.05, canvas.height * 0.75);
-      ctx.lineTo(canvas.width * 0.5, canvas.height * 0.75);
-      ctx.strokeStyle = 'rgba(255, 0, 0, 0.4)';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      animationFrame = requestAnimationFrame(animate);
-    };
-
-    animate();
-
-    // Detect text hover
-    const handleCanvasHover = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      
-      let hovered: number | null = null;
-      
-      lines.forEach((line, index) => {
-        ctx.font = `bold ${line.size}px Montserrat`;
-        const textWidth = ctx.measureText(line.text).width;
-        const textHeight = line.size;
-        
-        if (
-          x >= line.x &&
-          x <= line.x + textWidth &&
-          y >= line.y - textHeight &&
-          y <= line.y + 15
-        ) {
-          hovered = index;
-        }
-      });
-      
-      setHoveredLine(hovered);
-    };
-    
-    canvas.addEventListener('mousemove', handleCanvasHover);
-
-    return () => {
-      window.removeEventListener('resize', setCanvasSize);
-      window.removeEventListener('mousemove', handleMouseMove);
-      canvas.removeEventListener('mousemove', handleCanvasHover);
-      cancelAnimationFrame(animationFrame);
-    };
-  }, [mousePosition, hoveredLine, dimensions]);
-
-  const Sphere = ({ delay, duration, size, x, y }: SphereProps) => (
+  const FloatingOrb = ({ 
+    size, 
+    delay, 
+    duration, 
+    x, 
+    y, 
+    blur = false 
+  }: { 
+    size: string; 
+    delay: number; 
+    duration: number; 
+    x: string; 
+    y: string; 
+    blur?: boolean;
+  }) => (
     <motion.div
-      className="absolute rounded-full bg-gradient-to-br from-red-500/10 to-red-500/5 backdrop-blur-md"
-      style={{ width: size, height: size }}
-      initial={{ opacity: 0, x: `${x}%`, y: `${y}%` }}
-      animate={{ 
-        opacity: [0.2, 0.5, 0.2],
-        x: [`${x}%`, `${x + 5}%`, `${x}%`],
-        y: [`${y}%`, `${y - 5}%`, `${y}%`]
+      className={`absolute rounded-full ${blur ? 'blur-sm' : ''}`}
+      style={{
+        width: size,
+        height: size,
+        left: x,
+        top: y,
+        background: `radial-gradient(circle at 30% 30%, 
+          rgba(255, 255, 255, 0.3), 
+          rgba(255, 255, 255, 0.1), 
+          rgba(255, 255, 255, 0.05))`,
+        backdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+        boxShadow: `
+          0 8px 32px rgba(255, 255, 255, 0.1),
+          inset 0 1px 0 rgba(255, 255, 255, 0.3),
+          inset 0 -1px 0 rgba(255, 255, 255, 0.1)
+        `,
       }}
-      transition={{ 
-        duration: duration, 
+      animate={{
+        y: [0, -20, 0],
+        x: [0, 10, 0],
+        scale: [1, 1.05, 1],
+        rotate: [0, 5, 0],
+      }}
+      transition={{
+        duration: duration,
         delay: delay,
         repeat: Infinity,
-        repeatType: "reverse"
+        ease: "easeInOut",
       }}
     />
   );
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-black">
-      {/* Glass spheres */}
-      <Sphere delay={0} duration={8} size="150px" x={80} y={20} />
-      <Sphere delay={1} duration={12} size="250px" x={10} y={70} />
-      <Sphere delay={2} duration={10} size="200px" x={70} y={80} />
-      <Sphere delay={3} duration={9} size="180px" x={20} y={30} />
-      <Sphere delay={4} duration={11} size="220px" x={90} y={50} />
-      
-      {/* Main content */}
-      <motion.canvas
-        ref={canvasRef}
-        className="absolute top-0 left-0 w-full h-full"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1 }}
-      />
-      
-      {/* CTA Button */}
+    <div ref={containerRef} className="relative min-h-screen overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0">
+        {/* Base gradient */}
+        <div 
+          className="absolute inset-0 transition-all duration-1000"
+          style={{
+            background: `
+              radial-gradient(circle at ${mousePosition.x}% ${mousePosition.y}%, 
+                rgba(139, 92, 246, 0.15) 0%, 
+                rgba(59, 130, 246, 0.1) 25%, 
+                rgba(16, 185, 129, 0.08) 50%, 
+                rgba(0, 0, 0, 0.9) 100%
+              ),
+              linear-gradient(135deg, 
+                rgba(0, 0, 0, 0.95) 0%, 
+                rgba(17, 24, 39, 0.9) 50%, 
+                rgba(0, 0, 0, 0.95) 100%
+              )
+            `
+          }}
+        />
+        
+        {/* Animated mesh gradient */}
+        <motion.div
+          className="absolute inset-0 opacity-30"
+          animate={{
+            background: [
+              "radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%)",
+              "radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.3) 0%, transparent 50%), radial-gradient(circle at 60% 60%, rgba(255, 119, 198, 0.3) 0%, transparent 50%)",
+              "radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%)"
+            ]
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        />
+
+        {/* Floating particles */}
+        {Array.from({ length: 20 }).map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-1 h-1 bg-white/20 rounded-full"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              y: [0, -100, 0],
+              opacity: [0, 1, 0],
+            }}
+            transition={{
+              duration: 3 + Math.random() * 2,
+              delay: Math.random() * 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Floating Glass Orbs */}
+      <FloatingOrb size="200px" delay={0} duration={6} x="10%" y="20%" />
+      <FloatingOrb size="150px" delay={1} duration={8} x="85%" y="15%" blur />
+      <FloatingOrb size="300px" delay={2} duration={10} x="70%" y="60%" />
+      <FloatingOrb size="120px" delay={3} duration={7} x="15%" y="70%" blur />
+      <FloatingOrb size="180px" delay={4} duration={9} x="50%" y="80%" />
+      <FloatingOrb size="100px" delay={5} duration={6} x="90%" y="45%" blur />
+
+      {/* Main Content */}
       <motion.div 
-        className="absolute bottom-16 left-1/2 transform -translate-x-1/2"
-        initial={{ y: 50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 1, duration: 0.8 }}
+        className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 text-center"
+        style={{ y, opacity }}
       >
-        <button className="px-8 py-4 text-lg font-bold text-white bg-gradient-to-r from-red-700 to-red-600 rounded-md hover:from-red-600 hover:to-red-500 shadow-lg transform transition hover:scale-105">
-          START PRACTICING NOW
-        </button>
+        {/* Logo/Brand */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.2 }}
+          className="mb-8"
+        >
+          <div className="relative">
+            <h1 className="text-7xl md:text-8xl font-bold bg-gradient-to-r from-white via-gray-200 to-white bg-clip-text text-transparent">
+              RealPrep
+            </h1>
+            <motion.div
+              className="absolute -top-2 -right-2"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            >
+              <Sparkles className="w-8 h-8 text-purple-400" />
+            </motion.div>
+          </div>
+        </motion.div>
+
+        {/* Tagline */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.4 }}
+          className="mb-12 max-w-4xl"
+        >
+          <h2 className="text-2xl md:text-4xl font-light text-gray-300 mb-4">
+            Master Your Interviews with
+          </h2>
+          <div className="relative">
+            <h3 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 via-blue-400 to-emerald-400 bg-clip-text text-transparent">
+              AI-Powered Intelligence
+            </h3>
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-purple-400/20 via-blue-400/20 to-emerald-400/20 blur-xl"
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
+          </div>
+        </motion.div>
+
+        {/* Feature Pills */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.6 }}
+          className="flex flex-wrap justify-center gap-4 mb-12"
+        >
+          {[
+            { icon: Brain, text: "AI Analysis" },
+            { icon: Zap, text: "Real-time Feedback" },
+            { icon: Sparkles, text: "Smart Insights" }
+          ].map((feature, index) => (
+            <motion.div
+              key={index}
+              className="flex items-center gap-2 px-6 py-3 rounded-full backdrop-blur-md bg-white/10 border border-white/20"
+              whileHover={{ scale: 1.05, backgroundColor: "rgba(255, 255, 255, 0.15)" }}
+              transition={{ duration: 0.2 }}
+            >
+              <feature.icon className="w-5 h-5 text-purple-400" />
+              <span className="text-white font-medium">{feature.text}</span>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* CTA Buttons */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.8 }}
+          className="flex flex-col sm:flex-row gap-4"
+        >
+          <Link to="/signup">
+            <motion.button
+              className="group relative px-8 py-4 rounded-2xl overflow-hidden"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              {/* Button background */}
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-blue-600 to-emerald-600 opacity-90" />
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-blue-600 to-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl" />
+              
+              {/* Button content */}
+              <div className="relative flex items-center gap-2 text-white font-semibold text-lg">
+                Start Your Journey
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </motion.button>
+          </Link>
+
+          <Link to="/login">
+            <motion.button
+              className="px-8 py-4 rounded-2xl backdrop-blur-md bg-white/10 border border-white/20 text-white font-semibold text-lg hover:bg-white/20 transition-all duration-300"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Sign In
+            </motion.button>
+          </Link>
+        </motion.div>
+
+        {/* Scroll Indicator */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1, delay: 1.2 }}
+          className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
+        >
+          <motion.div
+            animate={{ y: [0, 10, 0] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center"
+          >
+            <motion.div
+              animate={{ y: [0, 12, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="w-1 h-3 bg-white/50 rounded-full mt-2"
+            />
+          </motion.div>
+        </motion.div>
       </motion.div>
     </div>
   );
