@@ -160,12 +160,12 @@ const LandingPage = () => {
                   <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
                   
                   {/* Icon */}
-                  <div className={`inline-flex p-4 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 mb-6`}>
+                  <div className={`inline-flex p-4 rounded-2xl bg-gradient-to-br ${feature.gradient} mb-6`}>
                     <div className="text-white">{feature.icon}</div>
                   </div>
                   
                   {/* Content */}
-                  <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-indigo-400 group-hover:to-emerald-400 group-hover:bg-clip-text transition-all duration-300">
+                  <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-purple-400 group-hover:to-emerald-400 group-hover:bg-clip-text transition-all duration-300">
                     {feature.title}
                   </h3>
                   <p className="text-gray-400 leading-relaxed">
@@ -313,7 +313,7 @@ const LandingPage = () => {
               >
                 <Link
                   to="/signup"
-                  className="group inline-flex items-center gap-3 px-10 py-5 rounded-2xl bg-gradient-to-r from-indigo-600 via-violet-600 to-emerald-600 text-white font-semibold text-lg hover:shadow-2xl hover:shadow-indigo-500/25 transition-all duration-300"
+                  className="group inline-flex items-center gap-3 px-10 py-5 rounded-2xl bg-gradient-to-r from-purple-600 via-blue-600 to-emerald-600 text-white font-semibold text-lg hover:shadow-2xl hover:shadow-purple-500/25 transition-all duration-300"
                 >
                   Start Your Journey
                   <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />

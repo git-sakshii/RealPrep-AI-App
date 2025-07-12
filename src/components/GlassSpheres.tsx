@@ -230,8 +230,8 @@ const GlassSpheres = () => {
               whileTap={{ scale: 0.95 }}
             >
               {/* Button background */}
-              <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-violet-600 to-emerald-600 opacity-90" />
-              <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-violet-600 to-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl" />
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-blue-600 to-emerald-600 opacity-90" />
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-blue-600 to-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl" />
               
               {/* Button content */}
               <div className="relative flex items-center gap-2 text-white font-semibold text-lg">
